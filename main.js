@@ -7,11 +7,22 @@ $(document).on('click', '.addChild', e => {
   generateBox(Number(i)+1, newPresent);
 });
 $(document).on('blur', '.inputs', calculate);
-$(document).on('blur', '#rate', () => calculate({
-  currentTarget:{
-    id:'x-1'
-  }
-}));
+$(document).on('blur', '#rateM', () => {
+  convertingRate('M');
+  return calculate({
+    currentTarget:{
+      id:'x-1'
+    }
+  });
+});
+$(document).on('blur', '#rateY', () => {
+  convertingRate('Y');
+  return calculate({
+    currentTarget:{
+      id:'x-1'
+    }
+  });
+});
 $(document).on('change', '.whatCalc', e => {
   const [,i] = e.currentTarget.id.split('-');
   const variable = e.currentTarget.value;
@@ -23,30 +34,58 @@ $(document).on('change', '.inputFuture', e => {
   
 })
 
-function calculate(e){
-  const [, i] = e.currentTarget.id.split('-');
-  const variable = $(`#whatCalc-${i}`).val();
-  
-  const [present, future, period, payment, rate] = getValues(i);
-  let result;
-  
-  switch (variable) {
-    case 'present':
-      result = getPresent(future, period, payment, rate);
-      break;
-    case 'future':
-      result = getFuture(present, period, payment, rate);
-      break;
-    case 'period':
-      result = getPeriod(present, future, payment, rate);
-      break;
-    case 'payment':
-      result = getPayment(present, future, period, rate);
-      break;
-    default:
-      break;
+function convertingMonthsToYear(type, i) {
+  if(type === 'M'){
+    const pM = $(`#periodM-${i}`).val();
+    $(`#periodY-${i}`).val((pM / 12).toFixed(1));
+  }else{
+    const pY = $(`#periodY-${i}`).val();
+    $(`#periodM-${i}`).val(pY * 12);
   }
-  $(`#${variable}-${i}`).val(result.toFixed(2));
+}
+function convertingRate(type) {
+  if (type === 'M') {
+    const rateM = $('#rateM').val();
+    const rateY = (Math.pow( (rateM / 100 + 1), 12) - 1)*100;
+    $('#rateY').val(rateY.toFixed(2));
+  } else {
+    const rateY = $('#rateY').val();
+    const rateM = (Math.pow( (rateY / 100 + 1), 1 / 12) - 1)*100;
+    $('#rateM').val(rateM.toFixed(2));
+  }
+}
+
+function calculate(e){
+  console.log('in calculate');
+  const [type, i] = e.currentTarget.id.split('-');
+  const variable = $(`#whatCalc-${i}`).val();
+  let addition = '';
+  if(variable === 'period') {
+    addition = 'M';
+  }
+  if (type.match(/period/)) {
+    convertingMonthsToYear(type.split('eriod')[1], i);
+  }
+  const [present, future, period, payment, rate] = getValues(i);
+  const functions = {
+    present: (present, future, period, payment, rate) => getPresent(future, period, payment, rate),
+    future: (present, future, period, payment, rate) => getFuture(present, period, payment, rate),
+    period: (present, future, period, payment, rate) => getPeriod(present, future, payment, rate),
+    payment: (present, future, period, payment, rate) => getPayment(present, future, period, rate)
+  }
+  const calc = functions[variable];
+  console.log('in calc');
+  if(calc) {
+    console.log('in calc', variable);
+    const result = calc(present, future, period, payment, rate);
+    console.log('result', result);
+    $(`#${variable}${addition}-${i}`).val(result.toFixed(2));
+    console.log(`#${variable}${addition}-${i}`);
+    if(variable === 'period') {
+      console.log('var is period');
+      convertingMonthsToYear(addition, i);
+    }
+  }
 
   if($(`#box-${Number(i)+1}`).length){
     $(`#present-${Number(i)+1}`).val($(`#future-${i}`).val());
@@ -59,18 +98,19 @@ function calculate(e){
 }
 
 function getValues(i){
-  const rate = Number($('#rate').val()) / 100;
+  const rate = Number($('#rateM').val()) / 100;
   const present = Number($(`#present-${i}`).val());
   const future = Number($(`#future-${i}`).val());
   const payment = Number($(`#payment-${i}`).val());
-  let period = $(`#period-${i}`).val();
-  if(period.match(/\d+\*\d+/)){
+  let period = $(`#periodM-${i}`).val();
+  if(period.match(/\d+|\s+\*\d+|\s+/)){
     period = eval(period);
   } else {
     period = Number(period);
   }
   return [present, future, period, payment, rate];
 }
+
 function getPresent(future, period, payment, rate) {
   if(rate === 0) return future - period*payment;
   
@@ -130,8 +170,10 @@ function generateBox(i, presentValue = '0.00'){
       </label>
       </br>
       <label for="period-${i}">
-        Period (in Months):
-        <input type="text" class="inputs in-${i}" id="period-${i}" size="6" value="12*3"/>
+        Period:
+        <input type="text" class="inputs in-${i}" id="periodM-${i}" size="6" value="36"/>
+        Months or 
+        <input type="text" class="inputs in-${i}" id="periodY-${i}" size="6" value="3"/>Years
       </label>
       </br>
       <label for="payment-${i}">

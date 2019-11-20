@@ -4,12 +4,15 @@
   <title>Financial Calculator</title>
   <script src="../js/jquery.min.js"></script>
   <script src="main.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Gruppo&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="main.css" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="shortcut icon" href="favicon.ico"/>
 </head>
 <body>
   <header>
-    <a href="index.html"><h1>Financial Calculator Logo</h1></a>
+    <a id="title" href="index.html">Financial Calculator</a>
     </br>
   </header>
   <div>
@@ -19,7 +22,8 @@
   <div id="container">
     <label for="rate">
       Rate: 
-      <input type="text" id="rate" size="3" />% per month
+      <input type="text" id="rateM" size="5" />% per month
+      or <input type="text" id="rateY" size="5" />% per year
     </label>
     </div>
   </div>
